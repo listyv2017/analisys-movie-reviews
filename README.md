@@ -1,0 +1,2 @@
+# analisys-movie-reviews
+映画のレビューサイトのコメント欄から感情分析を行うWebアプリケーション

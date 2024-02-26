@@ -15,6 +15,7 @@ poetryはプロジェクトの依存関係の管理を行うツールです。
 
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
+```
 
 ### 環境変数の設定
 
@@ -23,6 +24,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 ```bash
 export POETRY_HOME="$HOME/.poetry"
 export PATH="$POETRY_HOME/bin:$PATH"
+```
 
 これにより、poetryコマンドが実行可能な状態になります。.bash_profileにはこれらの設定は不要です。
 
@@ -30,12 +32,14 @@ export PATH="$POETRY_HOME/bin:$PATH"
 
 ```bash
 source ~/.bashrc
+```
 
 ### インストールの確認
 以下のコマンドを使用してpoetryが正しくインストールされているか確認できます。
 
 ```bash
 poetry --version
+```
 
 バージョン番号が表示されれば、poetryのインストールは成功です。
 
@@ -54,6 +58,7 @@ poetryは複数のPythonバージョンの管理を容易にするためのツ�
 
 ```bash
 curl https://pyenv.run | bash
+```
 
 
 ### 環境変数の設定
@@ -64,18 +69,21 @@ curl https://pyenv.run | bash
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
 echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
 echo 'eval "$(pyenv init -)"' >> ~/.bashrc
+```
 
 
 最後に、変更を反映させるために、新しいターミナルを開いて、.bashrcを再読み込みするか、次のようにして反映させます。
 
 ```bash
 source ~/.bashrc
+```
 
 ### インストールの確認
 以下のコマンドを使用してpyenvが正しくインストールされているか確認できます。
 
 ```bash
 pyenv --version
+```
 
 バージョン番号が表示されれば、pyenvのインストールは成功です。
 

@@ -75,7 +75,8 @@ def scrape_reviews(movie_url):
             json.dump(data, f, ensure_ascii=False)
             f.write('\n')
     print("作品のレビュー抽出が終了しました。:", title)
-    
+
+"""  
     # JSONLファイルを読み込んで表示する関数
     with open(filename, 'r') as file:
         for line in file:
@@ -83,7 +84,7 @@ def scrape_reviews(movie_url):
             data = json.loads(line)
             # 読み込んだデータを表示する
             print(data)
-            
+"""            
 
 if __name__ == "__main__":
     

@@ -1,71 +1,102 @@
 import requests
 from bs4 import BeautifulSoup
-import csv
 import json
-
-#最大ページ数の取得
-# WebページのURL
-movie_url = 'https://filmarks.com/movies/109465'
-
-# HTTP GETリクエストを送信してWebページのHTMLデータを取得
-r = requests.get(movie_url)
-
-# もしリクエストが成功した場合（ステータスコードが200の場合）
-if r.status_code == 200:
-    # HTMLデータを取得
-    html_doc = r.text
-    # HTMLデータを表示
-    #print(html_doc)
-else:
-    print("Failed to retrieve HTML data. Status code:", r.status_code)
+import time
+import concurrent.futures
 
 
-# BeautifulSoupを使ってHTMLを解析
-soup = BeautifulSoup(html_doc, 'html.parser')
+# レビューの最大ページ取得
+def get_last_pagination(soup):
 
-pagination = soup.find('a', class_='c-pagination__last')
-lastpage_href = pagination.get('href')
-last_page = lastpage_href.split('=')[-1]
+    pagination = soup.find('a', class_='c-pagination__last')
+    lastpage_href = pagination.get('href')
+    last_page = lastpage_href.split('=')[-1]
 
-print(last_page)
+    return int(last_page)
 
 # 映画のタイトル取得
-script_tag = soup.find("script", type='application/ld+json')
-if script_tag:
-    script_json = script_tag.string.strip()
-    script_content = json.loads(script_json)
-    print(script_content['name'])
+def get_title(soup):
+    
+    script_tag = soup.find("script", type='application/ld+json')
+    if script_tag:
+        script_json = script_tag.string.strip()
+        script_content = json.loads(script_json)
+        title = script_content['name']
+        
+    return title
 
-# 1ページ目のレビューを取得　
-content = []
-i = 0
-# csvファイルの作成
-"""with open('reviews.csv', 'w', newline='', encoding='utf-8') as f:
-    writer = csv.writer(f)
-
+# そのページのレビューを取得
+def get_reviews_on_page(soup):
+    reviews = []
     for review in soup.find_all('div', class_='p-mark__review'):
-        content = review.text
-        print(content)
-        i += 1
-        try:
-            writer.writerow([content])
-            print(f"{i}:書き込みが正常に完了しました。")
-        except Exception as e:
-            print("CSVファイルの書き込み中にエラーが発生しました:", e)
+        content = review.text.strip()
+        reviews.append(content)
+    return reviews
 
-"""
+# 単一のページのレビュー取得
+def scrape_single_page(page_url):
+    r = requests.get(page_url)
+    if r.status_code == 200:
+        soup = BeautifulSoup(r.text, 'html.parser')
+        return get_reviews_on_page(soup)
+    else:
+        print(f"Failed to retrieve HTML data for URL: {page_url}")
+        return
 
-# JSONファイルに書き込み
-"""
-with open('reviews.json', 'w', newline='', encoding='utf-8') as outfiles:
-    writer = csv.writer(f)
+# 全ページ分のレビューを取得
+def scrape_reviews(movie_url):
+    
+    # HTTP GETリクエストを送信してWebページのHTMLデータを取得
+    r = requests.get(movie_url)
+    if r.status_code == 200:
+        html_doc = r.text
+    else:
+        print("Failed to retrieve HTML data. Status code:", r.status_code)
+        return
+    
+    # BeautifulSoupを使ってHTMLを解析
+    soup = BeautifulSoup(html_doc, 'html.parser')
+    title = get_title(soup)
+    last_page = get_last_pagination(soup)
+    all_reviews = []
 
-    for review in soup.find_all('div', class_='p-mark__review'):
-        content = review.text
-        #print(content)
-        i += 1
-        try:
-            writer.writerow([content])
-            #print(f"{i}:書き込みが正常に完了しました。")
-        except Exception as e:
-            print("CSVファイルの書き込み中にエラーが発生しました:", e)"""
+    
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        
+        page_urls = [f"{movie_url}?page={page_number}" for page_number in range(1, last_page + 1)]
+        reviews_lists = executor.map(scrape_single_page, page_urls)
+        for reviews in reviews_lists:
+            all_reviews.extend(reviews)
+            
+    filename = f"{title}_reviews.jsonl"
+    with open(filename, 'w') as f:
+        for review in all_reviews:
+            data = {"title": title, "review": review}
+            json.dump(data, f, ensure_ascii=False)
+            f.write('\n')
+    print("作品のレビュー抽出が終了しました。:", title)
+    
+    # JSONLファイルを読み込んで表示する関数
+    with open(filename, 'r') as file:
+        for line in file:
+            # 各行のJSONオブジェクトを読み込む
+            data = json.loads(line)
+            # 読み込んだデータを表示する
+            print(data)
+            
+
+if __name__ == "__main__":
+    
+    # 処理を開始する前の時間を記録
+    start_time = time.time()
+    
+    # WebページのURL
+    movie_url = 'https://filmarks.com/movies/109465'
+    #reviewを取得
+    scrape_reviews(movie_url)
+
+    # 処理を終了する時間を記録
+    end_time = time.time()
+    # 処理にかかった時間を計算（秒単位）
+    elapsed_time = end_time - start_time
+    print("処理にかかった時間:", elapsed_time, "秒")

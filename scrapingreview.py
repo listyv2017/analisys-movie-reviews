@@ -4,6 +4,8 @@ import json
 import time
 import concurrent.futures
 
+# グローバルセッションの初期化
+session = requests.Session()
 
 # レビューの最大ページ取得
 def get_last_pagination(soup):
@@ -35,7 +37,7 @@ def get_reviews_on_page(soup):
 
 # 単一のページのレビュー取得
 def scrape_single_page(page_url):
-    r = requests.get(page_url)
+    r = session.get(page_url)  # セッションを使用してリクエスト
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
         return get_reviews_on_page(soup)
@@ -47,7 +49,7 @@ def scrape_single_page(page_url):
 def scrape_reviews(movie_url):
     
     # HTTP GETリクエストを送信してWebページのHTMLデータを取得
-    r = requests.get(movie_url)
+    r = session.get(movie_url)
     if r.status_code == 200:
         html_doc = r.text
     else:
@@ -66,7 +68,8 @@ def scrape_reviews(movie_url):
         page_urls = [f"{movie_url}?page={page_number}" for page_number in range(1, last_page + 1)]
         reviews_lists = executor.map(scrape_single_page, page_urls)
         for reviews in reviews_lists:
-            all_reviews.extend(reviews)
+            if reviews is not None:  # Noneチェックを追加
+                all_reviews.extend(reviews)
             
     filename = f"{title}_reviews.jsonl"
     with open(filename, 'w') as f:
@@ -98,6 +101,5 @@ if __name__ == "__main__":
 
     # 処理を終了する時間を記録
     end_time = time.time()
-    # 処理にかかった時間を計算（秒単位）
     elapsed_time = end_time - start_time
     print("処理にかかった時間:", elapsed_time, "秒")

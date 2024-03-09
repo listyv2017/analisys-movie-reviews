@@ -8,7 +8,6 @@ import concurrent.futures
 session = requests.Session()
 
 # レビューの最大ページ取得
-
 def get_last_pagination(soup):
 
     pagination = soup.find('a', class_='c-pagination__last')

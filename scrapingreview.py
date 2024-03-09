@@ -8,6 +8,7 @@ import concurrent.futures
 session = requests.Session()
 
 # レビューの最大ページ取得
+
 def get_last_pagination(soup):
 
     pagination = soup.find('a', class_='c-pagination__last')
@@ -41,10 +42,11 @@ def scrape_single_page(page_url):
     r = session.get(page_url)  # セッションを使用してリクエスト
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
+        print(page_url)
         return get_reviews_on_page(soup)
     else:
         print(f"Failed to retrieve HTML data for URL: {page_url}")
-        return
+        return 0
 
 # 全ページ分のレビューを取得
 def scrape_reviews(movie_url):
@@ -55,18 +57,29 @@ def scrape_reviews(movie_url):
         html_doc = r.text
     else:
         print("Failed to retrieve HTML data. Status code:", r.status_code)
-        return
+        return 0
     
     # BeautifulSoupを使ってHTMLを解析
     soup = BeautifulSoup(html_doc, 'html.parser')
     title = get_title(soup)
-    last_page = get_last_pagination(soup)
     all_reviews = []
+    last_page = get_last_pagination(soup)
+    max_page = 30
+    
+    #last_pageとmax_pageを比較する
+    if last_page > max_page:
+        last_page = max_page
+    print("last_page:%d", last_page)
 
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
 
-        page_urls = [f"{movie_url}?page={page_number}" for page_number in range(1, last_page + 1)]
+        page_urls = []
+        for page_number in range(1, last_page + 1):
+            
+            page_urls.append(f"{movie_url}?page={page_number}")
+            
+            
         reviews_lists = executor.map(scrape_single_page, page_urls)
 
         # 処理を開始する前の時間を記録

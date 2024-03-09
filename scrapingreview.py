@@ -9,22 +9,18 @@ session = requests.Session()
 
 # レビューの最大ページ取得
 def get_last_pagination(soup):
-
     pagination = soup.find('a', class_='c-pagination__last')
     lastpage_href = pagination.get('href')
     last_page = lastpage_href.split('=')[-1]
-
     return int(last_page)
 
 # 映画のタイトル取得
 def get_title(soup):
-    
     script_tag = soup.find("script", type='application/ld+json')
     if script_tag:
         script_json = script_tag.string.strip()
         script_content = json.loads(script_json)
         title = script_content['name']
-        
     return title
 
 # そのページのレビューを取得
@@ -37,7 +33,6 @@ def get_reviews_on_page(soup):
 
 # 単一のページのレビュー取得
 def scrape_single_page(page_url):
-    
     r = session.get(page_url)  # セッションを使用してリクエスト
     if r.status_code == 200:
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -49,7 +44,6 @@ def scrape_single_page(page_url):
 
 # 全ページ分のレビューを取得
 def scrape_reviews(movie_url):
-
     # HTTP GETリクエストを送信してWebページのHTMLデータを取得
     r = session.get(movie_url)
     if r.status_code == 200:
@@ -70,20 +64,15 @@ def scrape_reviews(movie_url):
         last_page = max_page
     print("last_page:%d", last_page)
 
-
     with concurrent.futures.ThreadPoolExecutor() as executor:
-
         page_urls = []
         for page_number in range(1, last_page + 1):
-            
             page_urls.append(f"{movie_url}?page={page_number}")
-            
             
         reviews_lists = executor.map(scrape_single_page, page_urls)
 
         # 処理を開始する前の時間を記録
         start_time = time.time()
-        
         for reviews in reviews_lists:
             if reviews is not None:  # Noneチェックを追加
                 all_reviews.extend(reviews)
@@ -92,8 +81,6 @@ def scrape_reviews(movie_url):
         end_time = time.time()
         elapsed_time = end_time - start_time
         print("処理にかかった時間:", elapsed_time, "秒")
-             
-
     
     filename = f"{title}_reviews.jsonl"
     with open(filename, 'w') as f:
@@ -103,8 +90,6 @@ def scrape_reviews(movie_url):
             f.write('\n')
     print("作品のレビュー抽出が終了しました。:", title)
     
-
-
 """  
     # JSONLファイルを読み込んで表示する関数
     with open(filename, 'r') as file:
@@ -116,7 +101,6 @@ def scrape_reviews(movie_url):
 """            
 
 if __name__ == "__main__":
-    
     # WebページのURL
     movie_url = 'https://filmarks.com/movies/109465'
     #reviewを取得
